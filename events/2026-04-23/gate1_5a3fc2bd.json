@@ -1,0 +1,24 @@
+{
+  "event_id": "gate1_5a3fc2bd",
+  "device_id": "dm3_demo_01",
+  "site": "仓库门口-1",
+  "ts_start": "2026-04-23T16:44:10.901+08:00",
+  "ts_end": "2026-04-23T16:44:10.901+08:00",
+  "has_person": true,
+  "person_count_est": 2,
+  "direction": "in",
+  "confidence": 0.82,
+  "ledger_match": {
+    "matched": false,
+    "reason": "demo-未匹配"
+  },
+  "alarm": {
+    "level": "high",
+    "type": "无台账进入"
+  },
+  "artifact": {
+    "image": "placeholder.gif",
+    "video": "placeholder.mp4"
+  },
+  "status": "未处理"
+}

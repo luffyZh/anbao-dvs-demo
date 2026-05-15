@@ -1,0 +1,871 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>《H安保》隐私防护核安保 Demo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #06080c;
+        --panel: rgba(255, 255, 255, 0.06);
+        --panel2: rgba(255, 255, 255, 0.08);
+        --stroke: rgba(255, 255, 255, 0.12);
+        --text: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.62);
+        --muted2: rgba(255, 255, 255, 0.45);
+        --good: #46f0b6;
+        --warn: #ffd36a;
+        --bad: #ff5a73;
+        --cyan: #72d6ff;
+        --shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
+        --radius: 18px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        background: radial-gradient(1200px 900px at 30% 10%, rgba(114, 214, 255, 0.08), transparent 65%),
+          radial-gradient(900px 700px at 82% 42%, rgba(255, 90, 115, 0.06), transparent 60%),
+          radial-gradient(800px 500px at 42% 92%, rgba(70, 240, 182, 0.06), transparent 55%),
+          linear-gradient(180deg, #04060a, #05060a 30%, #04060a);
+        color: var(--text);
+        font-family: "Noto Serif SC", "PingFang SC", "Microsoft YaHei", serif;
+        overflow: hidden;
+      }
+
+      /* subtle noise overlay */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.7' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.35'/%3E%3C/svg%3E");
+        mix-blend-mode: overlay;
+        opacity: 0.06;
+      }
+
+      .wrap {
+        height: 100%;
+        padding: 22px 22px 18px;
+        display: grid;
+        grid-template-rows: auto 1fr;
+        gap: 14px;
+      }
+
+      header {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: end;
+        gap: 18px;
+        padding: 18px 20px 16px;
+        border: 1px solid var(--stroke);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.05));
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        position: relative;
+        overflow: hidden;
+      }
+      header::after {
+        content: "";
+        position: absolute;
+        inset: -40px -40px auto auto;
+        width: 260px;
+        height: 260px;
+        background: radial-gradient(circle at 30% 30%, rgba(114, 214, 255, 0.22), transparent 58%);
+        transform: rotate(10deg);
+        opacity: 0.75;
+      }
+
+      .title {
+        position: relative;
+        z-index: 1;
+      }
+      .title h1 {
+        margin: 0;
+        font-size: 22px;
+        letter-spacing: 0.6px;
+        font-weight: 600;
+      }
+      .title p {
+        margin: 8px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .stats {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        grid-auto-flow: column;
+        gap: 12px;
+        align-items: stretch;
+      }
+      .stat {
+        min-width: 150px;
+        padding: 12px 14px 12px;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(0, 0, 0, 0.22);
+        display: grid;
+        gap: 6px;
+      }
+      .stat .k {
+        font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12px;
+        color: var(--muted2);
+        letter-spacing: 0.06em;
+      }
+      .stat .v {
+        font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 22px;
+        letter-spacing: 0.04em;
+      }
+      .stat.good .v {
+        color: var(--good);
+      }
+      .stat.bad .v {
+        color: var(--bad);
+      }
+      .stat.warn .v {
+        color: var(--warn);
+      }
+
+      main {
+        min-height: 0;
+        display: grid;
+        grid-template-columns: 420px minmax(0, 1fr) 360px;
+        gap: 14px;
+      }
+
+      .panel {
+        border: 1px solid var(--stroke);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.04));
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        min-height: 0;
+      }
+
+      .left {
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+      }
+      .panel-hd {
+        padding: 16px 16px 10px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 10px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+        background: rgba(0, 0, 0, 0.22);
+      }
+      .panel-hd .hd-title {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.86);
+        letter-spacing: 0.04em;
+      }
+      .tag {
+        font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.72);
+        padding: 6px 10px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.18);
+      }
+
+      .event-list {
+        min-height: 0;
+        overflow: auto;
+        padding: 10px;
+      }
+      .event-item {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.18);
+        border-radius: 14px;
+        padding: 12px 12px;
+        margin: 10px 0;
+        cursor: pointer;
+        position: relative;
+        transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+      }
+      .event-item:hover {
+        transform: translateY(-1px);
+        border-color: rgba(114, 214, 255, 0.35);
+        background: rgba(114, 214, 255, 0.06);
+      }
+      .event-item.active {
+        border-color: rgba(114, 214, 255, 0.65);
+        box-shadow: 0 0 0 1px rgba(114, 214, 255, 0.2) inset;
+        background: rgba(114, 214, 255, 0.09);
+      }
+      .row1 {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        align-items: baseline;
+      }
+      .when {
+        font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.76);
+      }
+      .pill {
+        font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 11px;
+        padding: 5px 8px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(0, 0, 0, 0.22);
+        color: rgba(255, 255, 255, 0.8);
+      }
+      .pill.bad {
+        border-color: rgba(255, 90, 115, 0.42);
+        background: rgba(255, 90, 115, 0.12);
+        color: rgba(255, 204, 210, 0.95);
+      }
+      .pill.good {
+        border-color: rgba(70, 240, 182, 0.38);
+        background: rgba(70, 240, 182, 0.1);
+        color: rgba(198, 255, 236, 0.95);
+      }
+      .meta {
+        margin-top: 8px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        color: rgba(255, 255, 255, 0.72);
+        font-size: 12px;
+      }
+      .meta span {
+        color: rgba(255, 255, 255, 0.52);
+        margin-right: 6px;
+      }
+
+      .controls {
+        padding: 12px 12px 14px;
+        border-top: 1px solid rgba(255, 255, 255, 0.09);
+        background: rgba(0, 0, 0, 0.22);
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      button {
+        appearance: none;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(255, 255, 255, 0.06);
+        color: rgba(255, 255, 255, 0.9);
+        border-radius: 14px;
+        padding: 10px 12px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: transform 140ms ease, background 140ms ease, border-color 140ms ease;
+      }
+      button:hover {
+        transform: translateY(-1px);
+        border-color: rgba(114, 214, 255, 0.4);
+        background: rgba(114, 214, 255, 0.1);
+      }
+      button.primary {
+        border-color: rgba(114, 214, 255, 0.4);
+        background: linear-gradient(180deg, rgba(114, 214, 255, 0.18), rgba(114, 214, 255, 0.08));
+      }
+
+      .right {
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr) auto auto;
+        min-height: 0;
+      }
+      .preview {
+        min-height: 0;
+        padding: 14px;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+        overflow: auto;
+      }
+      .media {
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(0, 0, 0, 0.25);
+        border-radius: 16px;
+        overflow: hidden;
+        position: relative;
+        height: clamp(220px, 36vh, 520px);
+      }
+      .media::before {
+        content: "DVS 事件流脱敏可视化";
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        z-index: 2;
+        font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        color: rgba(255, 255, 255, 0.65);
+        padding: 6px 10px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(6px);
+      }
+      .media video,
+      .media img {
+        width: 100%;
+        height: 100%;
+        display: block;
+        object-fit: contain;
+        background: #000;
+      }
+      .detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .card {
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 16px;
+        background: rgba(0, 0, 0, 0.22);
+        padding: 12px 12px;
+      }
+      .card .label {
+        font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.52);
+        letter-spacing: 0.07em;
+      }
+      .card .value {
+        margin-top: 6px;
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.9);
+        line-height: 1.35;
+      }
+
+      .actions {
+        padding: 12px 14px 14px;
+        border-top: 1px solid rgba(255, 255, 255, 0.09);
+        background: rgba(0, 0, 0, 0.22);
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 10px;
+      }
+
+      .hint {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.58);
+        padding: 0 14px 12px;
+      }
+
+      .side {
+        display: grid;
+        grid-template-rows: auto auto minmax(0, 1fr);
+        min-height: 0;
+      }
+      .side-body {
+        min-height: 0;
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+        gap: 12px;
+        padding: 14px;
+      }
+      .kpi-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .donut-card {
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 16px;
+        background: rgba(0, 0, 0, 0.22);
+        padding: 12px 12px;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 12px;
+        align-items: center;
+      }
+      .donut {
+        --p: 0;
+        --c: var(--cyan);
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: conic-gradient(var(--c) calc(var(--p) * 1%), rgba(255, 255, 255, 0.12) 0);
+        position: relative;
+      }
+      .donut::after {
+        content: "";
+        position: absolute;
+        inset: 9px;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.68);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .donut-meta {
+        display: grid;
+        gap: 4px;
+      }
+      .donut-meta .k {
+        font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.52);
+        letter-spacing: 0.07em;
+      }
+      .donut-meta .v {
+        font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 20px;
+        letter-spacing: 0.04em;
+        color: rgba(255, 255, 255, 0.92);
+      }
+      .device-list {
+        min-height: 0;
+        overflow: auto;
+        display: grid;
+        gap: 10px;
+        padding-right: 2px;
+      }
+      .device-item {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.18);
+        border-radius: 14px;
+        padding: 12px 12px;
+        display: grid;
+        gap: 8px;
+      }
+      .device-top {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        align-items: baseline;
+      }
+      .device-id {
+        font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12px;
+        letter-spacing: 0.04em;
+        color: rgba(255, 255, 255, 0.86);
+      }
+      .device-loc {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.62);
+      }
+      .device-metrics {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.72);
+      }
+      .chip {
+        font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 11px;
+        padding: 5px 8px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(0, 0, 0, 0.22);
+        color: rgba(255, 255, 255, 0.8);
+        white-space: nowrap;
+      }
+      .chip.good {
+        border-color: rgba(70, 240, 182, 0.38);
+        background: rgba(70, 240, 182, 0.1);
+        color: rgba(198, 255, 236, 0.95);
+      }
+      .chip.bad {
+        border-color: rgba(255, 90, 115, 0.42);
+        background: rgba(255, 90, 115, 0.12);
+        color: rgba(255, 204, 210, 0.95);
+      }
+      .chip.warn {
+        border-color: rgba(255, 211, 106, 0.4);
+        background: rgba(255, 211, 106, 0.12);
+        color: rgba(255, 240, 204, 0.95);
+      }
+
+      /* scrollbar */
+      .event-list::-webkit-scrollbar {
+        width: 10px;
+      }
+      .event-list::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.12);
+        border-radius: 999px;
+        border: 2px solid rgba(0, 0, 0, 0.22);
+      }
+      .event-list::-webkit-scrollbar-thumb:hover {
+        background: rgba(114, 214, 255, 0.22);
+      }
+      .preview::-webkit-scrollbar {
+        width: 10px;
+      }
+      .preview::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.12);
+        border-radius: 999px;
+        border: 2px solid rgba(0, 0, 0, 0.22);
+      }
+      .preview::-webkit-scrollbar-thumb:hover {
+        background: rgba(114, 214, 255, 0.22);
+      }
+      .device-list::-webkit-scrollbar {
+        width: 10px;
+      }
+      .device-list::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.12);
+        border-radius: 999px;
+        border: 2px solid rgba(0, 0, 0, 0.22);
+      }
+      .device-list::-webkit-scrollbar-thumb:hover {
+        background: rgba(114, 214, 255, 0.22);
+      }
+
+      @media (max-width: 1100px) {
+        main {
+          grid-template-columns: 1fr;
+        }
+        .wrap {
+          overflow: auto;
+        }
+        body {
+          overflow: auto;
+        }
+        .media {
+          height: clamp(200px, 30vh, 360px);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div class="title">
+          <h1>《H安保》隐私防护核安保 Demo（DVS 事件相机）</h1>
+          <p>
+            目标：人员经过检测 → 台账对齐 → 不合规告警 → 脱敏复核（内网闭环 / 不使用 RGB / 不做人脸）
+          </p>
+        </div>
+        <div class="stats">
+          <div class="stat good">
+            <div class="k">TODAY_EVENTS</div>
+            <div class="v" id="statTotal">—</div>
+          </div>
+          <div class="stat bad">
+            <div class="k">ALARMS</div>
+            <div class="v" id="statAlarms">—</div>
+          </div>
+          <div class="stat warn">
+            <div class="k">UNHANDLED</div>
+            <div class="v" id="statUnhandled">—</div>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <section class="panel left">
+          <div class="panel-hd">
+            <div class="hd-title">实时事件流</div>
+            <div class="tag" id="siteTag">仓库门口-1</div>
+          </div>
+
+          <div class="event-list" id="eventList"></div>
+
+          <div class="controls">
+            <button class="primary" id="btnSimulate">模拟新事件</button>
+            <button id="btnRefresh">立即刷新</button>
+          </div>
+        </section>
+
+        <section class="panel right">
+          <div class="panel-hd">
+            <div class="hd-title">复核详情</div>
+            <div class="tag" id="detailId">未选择</div>
+          </div>
+
+          <div class="preview">
+            <div class="media" id="mediaBox" style="aspect-ratio: 16 / 9"></div>
+
+            <div class="detail-grid">
+              <div class="card">
+                <div class="label">TIME</div>
+                <div class="value" id="dTime">—</div>
+              </div>
+              <div class="card">
+                <div class="label">COUNT_EST</div>
+                <div class="value" id="dCount">—</div>
+              </div>
+              <div class="card">
+                <div class="label">LEDGER_MATCH</div>
+                <div class="value" id="dLedger">—</div>
+              </div>
+              <div class="card">
+                <div class="label">ALARM</div>
+                <div class="value" id="dAlarm">—</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="hint">
+            提示：该素材为事件相机的“变化轨迹可视化”，用于复核行为是否发生；不采集 RGB 场景细节。
+          </div>
+
+          <div class="actions">
+            <button id="btnConfirm">确认违规</button>
+            <button id="btnFalse">误报</button>
+            <button id="btnHold">置为未处理</button>
+          </div>
+        </section>
+
+        <section class="panel side">
+          <div class="panel-hd">
+            <div class="hd-title">运营概览</div>
+            <div class="tag" id="deviceCount">—</div>
+          </div>
+
+          <div class="side-body">
+            <div class="kpi-row">
+              <div class="donut-card">
+                <div class="donut" id="donutAlarms" style="--p: 0; --c: var(--bad)"></div>
+                <div class="donut-meta">
+                  <div class="k">ALARMS</div>
+                  <div class="v" id="kpiAlarms">—</div>
+                </div>
+              </div>
+
+              <div class="donut-card">
+                <div class="donut" id="donutFalseRate" style="--p: 0; --c: var(--warn)"></div>
+                <div class="donut-meta">
+                  <div class="k">FALSE_RATE</div>
+                  <div class="v" id="kpiFalseRate">—</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="device-list" id="deviceList"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const state = { events: [], activeId: null, polling: null };
+      const devices = [
+        { device_id: "dm3_demo_01", site: "仓库门口-1", battery: 86, health: "正常" },
+        { device_id: "dm3_demo_02", site: "闸机通道-2", battery: 52, health: "正常" },
+        { device_id: "dm3_demo_03", site: "卸货区-1", battery: 21, health: "电量低" },
+        { device_id: "dm3_demo_04", site: "仓库侧门-1", battery: 64, health: "异常" },
+      ];
+
+      function fmtTime(iso) {
+        if (!iso) return "—";
+        // 兼容 ISO 字符串
+        try {
+          const d = new Date(iso);
+          const p = (n) => String(n).padStart(2, "0");
+          return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(
+            d.getMinutes()
+          )}:${p(d.getSeconds())}`;
+        } catch (e) {
+          return String(iso);
+        }
+      }
+
+      function pillClass(e) {
+        const t = (e.alarm && e.alarm.type) || "无";
+        const matched = e.ledger_match && e.ledger_match.matched;
+        if (t && t !== "无") return "bad";
+        if (matched) return "good";
+        return "";
+      }
+
+      function pillText(e) {
+        const t = (e.alarm && e.alarm.type) || "无";
+        if (t && t !== "无") return `告警：${t}`;
+        const matched = e.ledger_match && e.ledger_match.matched;
+        return matched ? "合规：台账匹配" : "待对齐";
+      }
+
+      function buildItem(e) {
+        const el = document.createElement("div");
+        el.className = "event-item" + (state.activeId === e.event_id ? " active" : "");
+        el.dataset.id = e.event_id;
+
+        const when = fmtTime(e.ts_start || e.ts_end);
+        const count = e.person_count_est ?? "—";
+        const site = e.site || "—";
+        const st = e.status || "—";
+
+        el.innerHTML = `
+          <div class="row1">
+            <div class="when">${when}</div>
+            <div class="pill ${pillClass(e)}">${pillText(e)}</div>
+          </div>
+          <div class="meta">
+            <div><span>点位</span>${site}</div>
+            <div><span>人数</span>${count}</div>
+            <div><span>状态</span>${st}</div>
+            <div><span>设备</span>${e.device_id || "—"}</div>
+          </div>
+        `;
+        el.addEventListener("click", () => selectEvent(e.event_id));
+        return el;
+      }
+
+      function renderList() {
+        const list = $("eventList");
+        list.innerHTML = "";
+        for (const e of state.events) list.appendChild(buildItem(e));
+      }
+
+      function renderStats() {
+        const total = state.events.length;
+        const alarms = state.events.filter((e) => (e.alarm?.type || "无") !== "无").length;
+        const unhandled = state.events.filter((e) => (e.status || "未处理") === "未处理").length;
+        $("statTotal").textContent = total;
+        $("statAlarms").textContent = alarms;
+        $("statUnhandled").textContent = unhandled;
+      }
+
+      function setDonutPercent(el, p) {
+        const clamped = Math.max(0, Math.min(100, p));
+        el.style.setProperty("--p", String(clamped));
+      }
+
+      function statusChip(health) {
+        if (health === "异常") return `<span class="chip bad">异常</span>`;
+        if (health === "电量低") return `<span class="chip warn">电量低</span>`;
+        return `<span class="chip good">正常</span>`;
+      }
+
+      function batteryChip(battery) {
+        if (battery <= 20) return `<span class="chip bad">电量 ${battery}%</span>`;
+        if (battery <= 40) return `<span class="chip warn">电量 ${battery}%</span>`;
+        return `<span class="chip good">电量 ${battery}%</span>`;
+      }
+
+      function renderDevices() {
+        $("deviceCount").textContent = `${devices.length} devices`;
+        const list = $("deviceList");
+        list.innerHTML = devices
+          .map(
+            (d) => `
+              <div class="device-item">
+                <div class="device-top">
+                  <div class="device-id">${d.device_id}</div>
+                  ${statusChip(d.health)}
+                </div>
+                <div class="device-loc">${d.site}</div>
+                <div class="device-metrics">
+                  <div>${batteryChip(d.battery)}</div>
+                  <div></div>
+                </div>
+              </div>
+            `
+          )
+          .join("");
+      }
+
+      function renderKpis() {
+        const alarmEvents = state.events.filter((e) => (e.alarm?.type || "无") !== "无");
+        const alarms = alarmEvents.length;
+        const falseCount = alarmEvents.filter((e) => (e.status || "未处理") === "误报").length;
+        const falseRate = alarms ? (falseCount / alarms) * 100 : 0;
+
+        $("kpiAlarms").textContent = String(alarms);
+        $("kpiFalseRate").textContent = `${falseRate.toFixed(1)}%`;
+        setDonutPercent($("donutAlarms"), Math.min(100, alarms));
+        setDonutPercent($("donutFalseRate"), falseRate);
+      }
+
+      function setMedia(e) {
+        const box = $("mediaBox");
+        box.innerHTML = "";
+        const v = e.artifact?.video_url || "/assets/placeholder.mp4";
+        const video = document.createElement("video");
+        video.src = v;
+        video.controls = true;
+        video.loop = true;
+        video.autoplay = true;
+        video.muted = true;
+        box.appendChild(video);
+      }
+
+      function selectEvent(id) {
+        state.activeId = id;
+        renderList();
+        const e = state.events.find((x) => x.event_id === id);
+        if (!e) return;
+
+        $("detailId").textContent = e.event_id;
+        $("dTime").textContent = fmtTime(e.ts_start || e.ts_end);
+        $("dCount").textContent = `${e.person_count_est ?? "—"}（估计）`;
+
+        const matched = e.ledger_match?.matched;
+        $("dLedger").textContent = matched ? "匹配" : "不匹配/无记录";
+
+        const alarmType = e.alarm?.type || "无";
+        $("dAlarm").textContent = alarmType === "无" ? "无" : alarmType;
+
+        setMedia(e);
+      }
+
+      async function refresh() {
+        const res = await fetch("/api/events", { cache: "no-store" });
+        const data = await res.json();
+        if (!data.ok) return;
+        state.events = data.events || [];
+        renderStats();
+        renderList();
+        renderKpis();
+
+        // 默认选中最新一条
+        if (!state.activeId && state.events.length) {
+          selectEvent(state.events[0].event_id);
+        } else if (state.activeId) {
+          const exists = state.events.some((e) => e.event_id === state.activeId);
+          if (!exists && state.events.length) selectEvent(state.events[0].event_id);
+        }
+      }
+
+      async function simulate() {
+        const res = await fetch("/api/simulate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ alarm_type: "无台账进入", person_count_est: 2 }),
+        });
+        const data = await res.json();
+        if (data.ok) {
+          await refresh();
+          selectEvent(data.event.event_id);
+        }
+      }
+
+      async function setStatus(status) {
+        if (!state.activeId) return;
+        await fetch(`/api/events/${state.activeId}/status`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status }),
+        });
+        await refresh();
+        selectEvent(state.activeId);
+      }
+
+      $("btnRefresh").addEventListener("click", refresh);
+      $("btnSimulate").addEventListener("click", simulate);
+      $("btnConfirm").addEventListener("click", () => setStatus("已确认"));
+      $("btnFalse").addEventListener("click", () => setStatus("误报"));
+      $("btnHold").addEventListener("click", () => setStatus("未处理"));
+
+      renderDevices();
+      refresh();
+      state.polling = setInterval(refresh, 2000);
+    </script>
+  </body>
+</html>
